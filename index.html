@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decentralized Subs - Web3 Patreon</title>
+    <!-- Load Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Basic loading spinner */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3b82f6; /* Blue-500 */
+            border-radius: 50%;
+            width: 1rem; /* 16px */
+            height: 1rem; /* 16px */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Basic markdown rendering */
+        #geminiSuggestions ul { list-style: disc; margin-left: 1.25rem; margin-top: 0.5rem;}
+        #geminiSuggestions li { margin-bottom: 0.25rem; }
+        #geminiSuggestions strong { font-weight: 600; }
+        /* Style select dropdown arrow */
+        select {
+            appearance: none;
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>');
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem; /* Make space for arrow */
+        }
+        html { scroll-behavior: smooth; } /* Enable smooth scrolling */
+        /* Add styles for section transitions if desired */
+        section { padding-top: 5rem; margin-top: -4rem; } /* Offset for fixed header + extra space */
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo/Brand -->
+                <div class="flex-shrink-0 flex items-center">
+                    <span class="font-bold text-xl text-blue-600">DecentralSubs</span>
+                </div>
+                <!-- Nav Links (Placeholder) -->
+                <div class="hidden md:flex space-x-8">
+                    <a href="#features" class="text-gray-500 hover:text-gray-900">Features</a>
+                    <a href="#pricing" class="text-gray-500 hover:text-gray-900">Pricing</a>
+                    <a href="#explore" class="text-gray-500 hover:text-gray-900">Explore Creators</a>
+                </div>
+                <!-- Connect Button / Account Info -->
+                <div class="flex items-center space-x-4">
+                     <div id="connectionDisplay" class="text-sm font-medium text-gray-700 hidden">
+                        <span id="accountDisplay" class="font-mono text-xs bg-gray-100 p-2 rounded-md"></span> | <span id="networkDisplay" class="text-gray-500"></span>
+                     </div>
+                    <button id="connectBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 ease-in-out text-sm">
+                        Connect Wallet
+                    </button>
+                     <!-- Role Dropdown (moves here after connect) -->
+                    <div id="roleSelectionContainer" class="relative hidden">
+                         <label for="roleDropdown" class="sr-only">Select Role</label>
+                         <select id="roleDropdown" class="text-sm block w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="subscriber">Subscriber</option>
+                            <option value="creator">Creator</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Connection Prompt (shown when not connected) -->
+        <div id="connectionPrompt" class="bg-white rounded-lg shadow p-6 text-center">
+            <h2 class="text-xl font-semibold mb-4">Welcome!</h2>
+            <p class="text-gray-600 mb-6">Connect your MetaMask wallet (on Sepolia Testnet) to get started.</p>
+            <!-- Connect button duplicated here for visibility when not connected -->
+             <button id="connectBtnAlt" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 ease-in-out">
+                Connect MetaMask
+            </button>
+            <div id="connectMessageAlt" class="mt-4 text-sm font-medium"></div>
+        </div>
+
+        <!-- Content shown after connection -->
+        <div id="dappContent" class="hidden space-y-6">
+
+            <!-- Universal Message Area -->
+             <div id="globalMessage" class="mt-4 text-sm font-medium p-3 rounded-md hidden"></div>
+
+            <!-- Subscriber View -->
+            <div id="subscriberView" class="hidden bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-5">Support Your Favorite Creator</h2>
+
+                <div class="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 id="creatorNameDisplay" class="font-medium text-gray-900 mb-2 text-lg">Vaibhavi Studio</h3>
+<p class="text-sm text-gray-600 mt-1">
+    <span class="font-semibold">Subscribers:</span>
+    <span id="subscriberCountDisplay" class="font-medium text-blue-600">0</span>
+</p>
+
+                    <p class="text-sm font-mono text-gray-600 break-all">
+                        <span class="font-semibold">Address:</span> <code id="displayCreatorAddress">N/A</code>
+                    </p>
+                    <p class="text-sm text-gray-600 mt-2">
+                         <span class="font-semibold">Available Tier (Example):</span> Tier 0
+                    </p>
+                     <!-- Tier details would be fetched and displayed here -->
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-medium text-gray-900 mb-2">Your Wallet & Subscription Status</h3>
+                    <div class="space-y-1 text-sm text-gray-600 mb-4">
+                        <p><span class="font-semibold">Payment Token:</span> <code id="displayTokenAddress" class="text-xs break-all">N/A</code></p>
+                        <p><span class="font-semibold">Your Balance:</span> <span id="displayBalance" class="font-medium">0</span> Tokens</p>
+                        <p><span class="font-semibold">Allowance:</span> <span id="displayAllowance" class="font-medium">0</span> Tokens</p>
+                        <p><span class="font-semibold">Subscription Active:</span> <span id="subscriptionActiveStatus" class="font-medium">Checking...</span></p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-3">
+                        <button id="approveBtn" disabled class="flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 ease-in-out text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                            <span class="approveBtnText">Approve Tokens</span>
+                            <div class="loader approveLoader hidden ml-2"></div>
+                        </button>
+                        <button id="subscribeBtn" disabled class="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 ease-in-out text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                             <span class="subscribeBtnText">Subscribe (Tier 0)</span>
+                             <div class="loader subscribeLoader hidden ml-2"></div>
+                        </button>
+                        <button id="cancelBtn" disabled class="flex items-center justify-center bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 ease-in-out text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                             <span class="cancelBtnText">Cancel Subscription</span>
+                             <div class="loader cancelLoader hidden ml-2"></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Creator View -->
+            <div id="creatorView" class="hidden bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-5">Creator Dashboard</h2>
+
+                <!-- Add Tier Section -->
+                <div class="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <h3 class="font-medium text-gray-900 mb-3">Add New Tier</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="tierPrice" class="block text-sm font-medium text-gray-700">Tier Price (in smallest token unit)</label>
+                            <input type="text" id="tierPrice" name="tierPrice" placeholder="e.g., 1000000000000000000 for 1 token" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 font-mono text-sm">
+                        </div>
+                         <div>
+                            <label for="tierDescription" class="block text-sm font-medium text-gray-700">Tier Description</label>
+                            <input type="text" id="tierDescription" name="tierDescription" placeholder="e.g., Premium Access, Supporter Badge" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button id="addTierBtn" disabled class="flex items-center justify-center bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 ease-in-out text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                             <span class="addTierBtnText">Add Tier</span>
+                             <div class="loader addTierLoader hidden ml-2"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Gemini Tier Suggestion Section -->
+                <div class="mb-6 border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-medium text-gray-900 mb-3">✨ Need Tier Ideas?</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="creatorType" class="block text-sm font-medium text-gray-700">What type of creator are you?</label>
+                            <input type="text" id="creatorType" name="creatorType" placeholder="e.g., Musician, Artist, Writer, Developer" class="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <button id="suggestTierBtn" disabled class="bg-gradient-to-r from-teal-400 to-blue-500 hover:from-teal-500 hover:to-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-200 ease-in-out text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
+                            <span id="suggestBtnText">✨ Suggest Tier Ideas</span>
+                            <div id="suggestLoader" class="loader hidden ml-2"></div>
+                        </button>
+                        <div id="geminiSuggestions" class="mt-4 text-sm text-gray-700 p-3 bg-gray-50 rounded-md border border-gray-200 hidden">
+                            <h4 class="font-semibold mb-2">Suggestions from Gemini:</h4>
+                            <div id="suggestionsContent" class="prose prose-sm max-w-none"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-medium text-gray-900 mb-2">Your Existing Tiers</h3>
+                    <div id="creatorTiersList" class="text-sm text-gray-600">
+                        Loading tiers... (Needs contract function)
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- /dappContent -->
+
+    </main>
+    <!-- Dummy Sections for Navbar Links -->
+    <section id="features" class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Features</h2>
+            <ul class="list-disc list-inside text-gray-700 space-y-2 text-sm md:text-base">
+                <li><strong class="font-medium">Direct Support:</strong> Fund creators directly using stablecoins or other ERC20 tokens.</li>
+                <li><strong class="font-medium">Decentralized:</strong> No central platform taking cuts or censoring creators. Built on Ethereum (Sepolia Testnet).</li>
+                <li><strong class="font-medium">Creator Control:</strong> Creators define their own subscription tiers and prices via smart contracts.</li>
+                <li><strong class="font-medium">Automated Payments:</strong> Recurring subscriptions managed reliably by Chainlink Automation (requires Keeper setup).</li>
+                <li><strong class="font-medium">Transparency:</strong> All subscriptions and payments are recorded publicly on the blockchain.</li>
+                <li><strong class="font-medium">AI Assistance:</strong> Integrated Gemini API helps creators brainstorm compelling tier ideas.</li>
+            </ul>
+        </div>
+    </section>
+
+    <section id="pricing" class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+         <div class="bg-white rounded-lg shadow-md p-6">
+             <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Pricing</h2>
+             <div class="text-gray-700 space-y-3 text-sm md:text-base">
+                <p>
+                    <strong class="font-medium">Zero Platform Fees:</strong> DecentralSubs takes <span class="font-bold text-blue-600">0%</span> commission on subscriptions. Creators receive the full amount directly to their wallet.
+                </p>
+                <p>
+                    <strong class="font-medium">Blockchain Fees Only:</strong> Users (creators and subscribers) only pay standard network transaction fees (gas) required by the Ethereum (Sepolia) blockchain itself. These fees vary based on network congestion and are paid to network validators, not to DecentralSubs.
+                </p>
+             </div>
+        </div>
+    </section>
+
+    <section id="explore" class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+         <div class="bg-white rounded-lg shadow-md p-6">
+             <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Explore Creators</h2>
+             <div id="creatorList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <!-- Creator cards will be rendered here by JavaScript -->
+                 <p class="text-gray-500 italic md:col-span-2 lg:col-span-3">Connect your wallet to see available creators.</p>
+             </div>
+        </div>
+    </section>
+
+    <!-- Ethers.js v6 script tag -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
+
+    <!-- Ethers.js v6 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
+
+    <script>
+        // --- Contract Config ---
+        const SUBSCRIPTION_SERVICE_ADDRESS = "0x20ba35Bb1F2fE3c95b0d0C7589BE9352C77966C1"; // <-- PASTE YOUR ADDRESS
+        const PAYMENT_TOKEN_ADDRESS = "0x2B078CeBE85524725eD1F37c321C1551C8863600"; // <-- PASTE YOUR ADDRESS
+        const EXAMPLE_CREATOR_ADDRESS = "0xA4eB2Ed4Ae1B970326339Ccb6ADbe87E15935389"; // <-- PASTE EXAMPLE CREATOR ADDRESS
+
+        // --- ABIs ---
+        const SUBSCRIPTION_SERVICE_ABI = [ 
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_creator",
+				"type": "address"
+			}
+		],
+		"name": "addCreator",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "_price",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "_description",
+				"type": "string"
+			}
+		],
+		"name": "addTier",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_creator",
+				"type": "address"
+			}
+		],
+		"name": "cancelSubscription",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "performData",
+				"type": "bytes"
+			}
+		],
+		"name": "performUpkeep",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_creator",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_tierId",
+				"type": "uint256"
+			}
+		],
+		"name": "subscribe",
+		"outputs": [],
+		"stateMutability": "payable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_paymentToken",
+				"type": "address"
+			}
+		],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "subscriber",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tierId",
+				"type": "uint256"
+			}
+		],
+		"name": "SubscriptionCancelled",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "subscriber",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tierId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "SubscriptionCharged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "creator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "subscriber",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "tierId",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"name": "SubscriptionCreated",
+		"type": "event"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes",
+				"name": "",
+				"type": "bytes"
+			}
+		],
+		"name": "checkUpkeep",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "upkeepNeeded",
+				"type": "bool"
+			},
+			{
+				"internalType": "bytes",
+				"name": "performData",
+				"type": "bytes"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "creatorKeys",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "creators",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "nextTierId",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "creatorSubscribers",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "MINIMUM_BALANCE",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nextChargeCreator",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nextChargeSubscriber",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "nextChargeTime",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nextChargeTimestamp",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "paymentToken",
+		"outputs": [
+			{
+				"internalType": "contract IERC20",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "SUBSCRIPTION_INTERVAL",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "subscriptions",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "tierId",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			},
+			{
+				"internalType": "uint256",
+				"name": "lastPaymentTimestamp",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+/* PASTE SUBSCRIPTION SERVICE ABI HERE */ ];
+        const ERC20_ABI = [
+            "function balanceOf(address owner) view returns (uint256)",
+            "function allowance(address owner, address spender) view returns (uint256)",
+            "function approve(address spender, uint256 amount) returns (bool)",
+            "function transferFrom(address from, address to, uint256 amount) returns (bool)",
+            "function transfer(address to, uint256 amount) returns (bool)"
+        ];
+
+        // --- Gemini API Config ---
+        const GEMINI_API_KEY = "AIzaSyAXF75pHkCyDOdlA_cA68w5PFeMZE3p-ug"; // Provided by Canvas
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+
+        // --- Dummy Data ---
+        // Replace EXAMPLE_CREATOR_ADDRESS placeholder below with the actual address if needed
+        // ✅ Updated Creator Data for Explore Section
+const DUMMY_CREATORS = [
+    {
+        address: EXAMPLE_CREATOR_ADDRESS, // Your real creator on Sepolia
+        name: "Vaibhavi Studio",
+        type: "Tech Content Creator",
+        subscribers: 100, // Can make dynamic later
+        description: "Sharing Web3 learning content and subscription-based utilities.",
+    },
+    {
+        address: "0xa1e8C8F4B9c6Bd7F4aDaE7C83b35Fb89347Fb112",
+        name: "CryptoCanvas",
+        type: "NFT Artist",
+        subscribers: 75,
+        description: "Exclusive digital artwork for supporters.",
+    },
+    {
+        address: "0x9C62c4F8344A8B9c4489B271E5a88cD2e9e22e71",
+        name: "BeatVerse",
+        type: "Music Producer",
+        subscribers: 210,
+        description: "Unlock behind-the-scenes music content + early access drops.",
+    }
+];
+
+        // Local state to store tiers added by the currently connected creator (will be updated after successful addTier tx)
+        let creatorTiersData = [];
+        
+        // --- Global Variables ---
+        let provider;
+        let signer;
+        let account;
+        let svcContract;
+        let tokenContract;
+
+        // --- DOM Elements ---
+        // Navbar/Connection
+        const connectBtn = document.getElementById('connectBtn');
+        const connectBtnAlt = document.getElementById('connectBtnAlt'); // Button in the prompt
+        const connectionDisplay = document.getElementById('connectionDisplay');
+        const accountDisplay = document.getElementById('accountDisplay');
+        const networkDisplay = document.getElementById('networkDisplay');
+        const connectionPrompt = document.getElementById('connectionPrompt');
+        const dappContent = document.getElementById('dappContent');
+        const globalMessage = document.getElementById('globalMessage');
+        const connectMessageAlt = document.getElementById('connectMessageAlt');
+
+        // Role Selection
+        const roleSelectionContainer = document.getElementById('roleSelectionContainer');
+        const roleDropdown = document.getElementById('roleDropdown');
+
+        // Subscriber View
+        const subscriberViewDiv = document.getElementById('subscriberView');
+        const displayCreatorAddress = document.getElementById('displayCreatorAddress');
+        const displayTokenAddress = document.getElementById('displayTokenAddress');
+        const displayBalance = document.getElementById('displayBalance');
+        const displayAllowance = document.getElementById('displayAllowance');
+        const subscriptionActiveStatus = document.getElementById('subscriptionActiveStatus');
+        const approveBtn = document.getElementById('approveBtn');
+        const subscribeBtn = document.getElementById('subscribeBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const creatorName = document.getElementById('creatorName');
+        const creatorTypeDisplay = document.getElementById('creatorTypeDisplay');
+        const creatorSubCount = document.getElementById('creatorSubCount');
+
+        // Creator View
+        const creatorViewDiv = document.getElementById('creatorView');
+        const addTierBtn = document.getElementById('addTierBtn');
+        const tierPriceInput = document.getElementById('tierPrice');
+        const tierDescriptionInput = document.getElementById('tierDescription');
+        const creatorTiersList = document.getElementById('creatorTiersList');
+        const creatorListDiv = document.getElementById('creatorList');
+        // Gemini elements
+        const suggestTierBtn = document.getElementById('suggestTierBtn');
+        const suggestBtnText = document.getElementById('suggestBtnText');
+        const suggestLoader = document.getElementById('suggestLoader');
+        const creatorTypeInput = document.getElementById('creatorType');
+        const geminiSuggestionsDiv = document.getElementById('geminiSuggestions');
+        const suggestionsContent = document.getElementById('suggestionsContent');
+        const geminiMessage = document.getElementById('geminiMessage');
+
+        // Loading indicators (get loaders within buttons)
+        const approveLoader = approveBtn.querySelector('.approveLoader');
+        const subscribeLoader = subscribeBtn.querySelector('.subscribeLoader');
+        const cancelLoader = cancelBtn.querySelector('.cancelLoader');
+        const addTierLoader = addTierBtn.querySelector('.addTierLoader');
+
+        // --- Utility Functions ---
+        function showGlobalMessage(text, isError = false) {
+             if (!globalMessage) return;
+             globalMessage.textContent = text;
+             globalMessage.className = `my-4 text-sm font-medium p-3 rounded-md ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+             globalMessage.classList.remove('hidden');
+             // Hide message after 5 seconds
+             setTimeout(() => {
+                 globalMessage.classList.add('hidden');
+                 globalMessage.textContent = '';
+             }, 5000);
+        }
+        // --- Display Functions ---
+        function displayCreators() {
+            if (!creatorListDiv) return;
+            creatorListDiv.innerHTML = ''; // Clear previous list
+            if (DUMMY_CREATORS.length === 0) {
+                creatorListDiv.innerHTML = '<p class="text-gray-500 italic">No creators found.</p>';
+                return;
+            }
+            DUMMY_CREATORS.forEach(creator => {
+                // Truncate address for display
+                const shortAddress = `${creator.address.substring(0, 6)}...${creator.address.substring(creator.address.length - 4)}`;
+                const creatorCard = `
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm hover:shadow-lg transition-shadow duration-200 flex flex-col justify-between">
+                        <div>
+                            <h4 class="font-semibold text-lg mb-1 truncate" title="${creator.name}">${creator.name}</h4>
+                            <p class="text-sm text-blue-600 mb-2">${creator.type}</p>
+                            <p class="text-xs text-gray-500 mb-2">${creator.description}</p>
+                            <p class="text-xs font-mono text-gray-600 break-all mb-2" title="${creator.address}">Address: ${shortAddress}</p>
+                            <p class="text-sm text-gray-800"><span class="font-medium">${creator.subscribers}</span> Subscribers</p>
+                        </div>
+                        <button onclick="selectCreator('${creator.address}')" class="mt-4 text-sm w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-3 rounded-md transition duration-150">
+                            View Profile & Tiers
+                        </button>
+                    </div>`;
+                creatorListDiv.innerHTML += creatorCard;
+            });
+        }
+
+        // Called when a creator is selected from the explore list
+        function selectCreator(creatorAddress) {
+            // Update the global variable that subscriber view uses
+            // NOTE: In a larger app, manage state more robustly (e.g., React state, URL params)
+            window.EXAMPLE_CREATOR_ADDRESS = creatorAddress; // Update the global used by subscribe/cancel
+
+            // Find creator data
+            const selectedCreatorData = DUMMY_CREATORS.find(c => c.address.toLowerCase() === creatorAddress.toLowerCase());
+
+            // Update display elements in Subscriber view
+            displayCreatorAddress.textContent = creatorAddress; // Show full address here
+            if (selectedCreatorData) {
+                creatorName.textContent = selectedCreatorData.name;
+                creatorTypeDisplay.textContent = selectedCreatorData.type;
+                creatorSubCount.textContent = selectedCreatorData.subscribers;
+            } else {
+                 // Fallback if data not found (shouldn't happen with dummy data)
+                 creatorName.textContent = "Selected Creator";
+                 creatorTypeDisplay.textContent = "Unknown Type";
+                 creatorSubCount.textContent = "N/A";
+            }
+
+            // Switch UI to subscriber view and refresh for this creator
+            roleDropdown.value = 'subscriber';
+            updateUIBasedOnRole('subscriber'); // This will call refreshStatus
+            displayCreators();
+
+
+            // Scroll to the top to show the subscriber view clearly
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            showGlobalMessage(`Now viewing creator: ${selectedCreatorData?.name || creatorAddress.substring(0,8)}...`, false);
+        }
+
+        // Add loading state management
+        function setLoading(button, textSpan, loader, isLoading, defaultText) {
+            if (!button || !textSpan || !loader) return;
+            button.disabled = isLoading;
+            textSpan.textContent = isLoading ? "Processing..." : defaultText;
+            if (isLoading) {
+                loader.classList.remove('hidden');
+            } else {
+                loader.classList.add('hidden');
+            }
+        }
+
+        // Formatting and parsing remain the same as previous version...
+         function formatUnits(value, decimals = 18) {
+             try {
+                 if (typeof value !== 'bigint' && typeof value !== 'string' && typeof value !== 'number') {
+                     return "0";
+                 }
+                 return ethers.formatUnits(value, decimals);
+             } catch (e) { console.error("Error formatUnits:", value, e); return "0"; }
+         }
+         function parseUnits(value, decimals = 18) {
+             try {
+                  if (typeof value !== 'string') value = String(value);
+                  if (!value || isNaN(parseFloat(value))) throw new Error("Invalid number format");
+                 return ethers.parseUnits(value, decimals);
+             } catch (e) { console.error("Error parseUnits:", value, e); return 0n; }
+         }
+         function renderMarkdown(text) { // Basic markdown renderer remains same...
+            if (!text) return '';
+            let html = text
+                .replace(/^# (.*$)/gm, '<h1 class="text-lg font-semibold mb-2">$1</h1>')
+                .replace(/^## (.*$)/gm, '<h2 class="text-md font-semibold mb-1">$1</h2>')
+                .replace(/^\* (.*$)/gm, '<ul><li>$1</li></ul>')
+                .replace(/<\/ul>\n<ul>/gm, '')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            return html;
+         }
+
+        // --- Core DApp Logic ---
+
+        async function connectWallet() {
+            showGlobalMessage("Connecting...", false);
+            if (typeof window.ethereum === 'undefined') {
+                 showGlobalMessage("MetaMask is not installed!", true);
+                alert("Please install MetaMask to use this DApp.");
+                return;
+            }
+             if (typeof ethers === 'undefined') {
+                  showGlobalMessage("Ethers.js library not loaded.", true);
+                  return;
+             }
+
+            try {
+                provider = new ethers.BrowserProvider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                signer = await provider.getSigner();
+                account = await signer.getAddress();
+                const network = await provider.getNetwork();
+
+                 if (network.chainId !== 11155111n) { // Sepolia Chain ID Check (BigInt)
+                    showGlobalMessage(`Please switch MetaMask to Sepolia Testnet (ID 11155111). You're on ${network.name}.`, true);
+                    alert(`Please switch MetaMask to Sepolia Testnet.`);
+                    disconnectWallet(); // Reset on wrong network
+                    return;
+                }
+
+                // --- Validate Configured Addresses and ABI ---
+                let configValid = true;
+                if (!ethers.isAddress(SUBSCRIPTION_SERVICE_ADDRESS) || SUBSCRIPTION_SERVICE_ADDRESS === "YOUR_SEPOLIA_SUBSCRIPTION_SERVICE_ADDRESS") {
+                     alert("Developer Error: Invalid Subscription Service address configured in HTML."); configValid = false;
+                }
+                if (!ethers.isAddress(PAYMENT_TOKEN_ADDRESS) || PAYMENT_TOKEN_ADDRESS === "YOUR_SEPOLIA_MOCK_TOKEN_ADDRESS") {
+                    alert("Developer Error: Invalid Payment Token address configured in HTML."); configValid = false;
+                }
+                if (!ethers.isAddress(EXAMPLE_CREATOR_ADDRESS) || EXAMPLE_CREATOR_ADDRESS === "CREATOR_WALLET_ADDRESS_TO_SUBSCRIBE_TO") {
+                     alert("Developer Error: Invalid Example Creator address configured in HTML."); configValid = false;
+                }
+                 if (!SUBSCRIPTION_SERVICE_ABI || SUBSCRIPTION_SERVICE_ABI.length === 0 || SUBSCRIPTION_SERVICE_ABI[0] === ' ') { // Check if ABI placeholder is empty
+                     alert("Developer Error: Subscription Service ABI not configured in HTML."); configValid = false;
+                 }
+                 if (!configValid) { disconnectWallet(); return; }
+
+                svcContract = new ethers.Contract(SUBSCRIPTION_SERVICE_ADDRESS, SUBSCRIPTION_SERVICE_ABI, signer);
+                tokenContract = new ethers.Contract(PAYMENT_TOKEN_ADDRESS, ERC20_ABI, signer);
+
+                // Update UI on successful connection
+                connectBtn.textContent = 'Connected';
+                connectBtn.disabled = true;
+                connectionDisplay.classList.remove('hidden');
+                accountDisplay.textContent = `${account.substring(0, 6)}...${account.substring(account.length - 4)}`;
+                networkDisplay.textContent = `${network.name}`;
+                connectionPrompt.classList.add('hidden'); // Hide initial prompt
+                dappContent.classList.remove('hidden'); // Show main DApp content
+                roleSelectionContainer.classList.remove('hidden'); // Show role dropdown in header
+
+                displayCreatorAddress.textContent = EXAMPLE_CREATOR_ADDRESS;
+                displayTokenAddress.textContent = PAYMENT_TOKEN_ADDRESS;
+
+                updateUIBasedOnRole(roleDropdown.value); // Set initial view
+                await refreshStatus(); // Fetch initial data
+                displayCreators();
+                showGlobalMessage("Wallet Connected Successfully!", false);
+
+            } catch (error) {
+                console.error("Connection failed:", error);
+                showGlobalMessage(`Connection failed: ${error.message || 'Unknown error'}`, true);
+                disconnectWallet(); // Ensure clean state on failure
+            }
+        }
+
+        function disconnectWallet() { // Reset UI to initial state
+            provider = null; signer = null; account = null; svcContract = null; tokenContract = null;
+
+            connectBtn.textContent = 'Connect Wallet'; connectBtn.disabled = false;
+            connectionDisplay.classList.add('hidden');
+            accountDisplay.textContent = ''; networkDisplay.textContent = '';
+            connectionPrompt.classList.remove('hidden');
+            dappContent.classList.add('hidden');
+            roleSelectionContainer.classList.add('hidden'); // Hide role dropdown
+            subscriberViewDiv.classList.add('hidden');
+            creatorViewDiv.classList.add('hidden');
+            displayBalance.textContent = '0'; displayAllowance.textContent = '0'; subscriptionActiveStatus.textContent = 'N/A';
+            // Disable all action buttons
+            approveBtn.disabled = true; subscribeBtn.disabled = true; cancelBtn.disabled = true; addTierBtn.disabled = true; suggestTierBtn.disabled = true;
+            globalMessage.classList.add('hidden'); connectMessageAlt.textContent = '';
+        }
+
+        function updateUIBasedOnRole(selectedRole) {
+            const isConnected = !!account;
+            // Hide both views initially
+            subscriberViewDiv.classList.add('hidden');
+            creatorViewDiv.classList.add('hidden');
+
+            if (selectedRole === 'subscriber') {
+                subscriberViewDiv.classList.remove('hidden');
+                approveBtn.disabled = !isConnected;
+                subscribeBtn.disabled = !isConnected;
+                cancelBtn.disabled = !isConnected;
+            } else if (selectedRole === 'creator') {
+                creatorViewDiv.classList.remove('hidden');
+                addTierBtn.disabled = !isConnected;
+                suggestTierBtn.disabled = !isConnected;
+                 if (isConnected) { /* loadCreatorTiers(); */ } // Placeholder
+            }
+             if (isConnected) { refreshStatus(); } // Refresh data for the current view
+        }
+
+        async function refreshStatus() {
+            if (!signer || !tokenContract || !svcContract) return;
+
+            // Only show detailed logs/messages in the relevant view
+            const isSubscriberView = roleDropdown.value === 'subscriber';
+            if (isSubscriberView) showGlobalMessage("Refreshing status...", false);
+
+            try {
+                const balanceWei = await tokenContract.balanceOf(account);
+                const allowanceWei = await tokenContract.allowance(account, SUBSCRIPTION_SERVICE_ADDRESS);
+                const subStatus = await getSubscriptionStatus(EXAMPLE_CREATOR_ADDRESS, account);
+
+                displayBalance.textContent = formatUnits(balanceWei);
+                displayAllowance.textContent = formatUnits(allowanceWei);
+                subscriptionActiveStatus.textContent = subStatus.active ? 'Yes' : 'No';
+
+                // --- Button Logic (Subscriber View) ---
+                let requiredAllowanceForSub = parseUnits("1", 18); // Default/Example Tier 0 price (1 token)
+                // TODO: Replace with actual fetching of the price for EXAMPLE_CREATOR_ADDRESS, Tier 0
+                // try { const price = await svcContract.getTierPrice(EXAMPLE_CREATOR_ADDRESS, 0); requiredAllowanceForSub = BigInt(price); } catch(e) {}
+
+                approveBtn.disabled = !account || (allowanceWei >= requiredAllowanceForSub);
+                subscribeBtn.disabled = !account || (allowanceWei < requiredAllowanceForSub) || subStatus.active; // Disable if allowance low OR already active
+                cancelBtn.disabled = !account || !subStatus.active; // Enable only if active
+
+                if (isSubscriberView) showGlobalMessage("Status refreshed.", false);
+
+            } catch (error) {
+                console.error("Refresh failed:", error);
+                 if (isSubscriberView) showGlobalMessage(`Refresh failed: ${error.message || 'Unknown error'}`, true);
+            }
+            const subCount = await getSubscriberCount(EXAMPLE_CREATOR_ADDRESS);
+            document.getElementById("subscriberCountDisplay").textContent = subCount;
+            document.getElementById("creatorNameDisplay").textContent = "Vaibhavi Studio";
+            await updateCreatorSubscriberCountUI();
+
+        }
+
+        async function getSubscriptionStatus(creator, subscriber) { // Fetch subscription status logic remains same...
+              if (!svcContract || !creator || !subscriber) return { active: false, tierId: null, lastPaymentTimestamp: null };
+             try {
+                 const subData = await svcContract.subscriptions(creator, subscriber);
+                  return {
+                     tierId: subData.tierId, active: subData.active, lastPaymentTimestamp: subData.lastPaymentTimestamp
+                 };
+             } catch (error) { console.error(`Error fetching sub status:`, error); return { active: false, tierId: null, lastPaymentTimestamp: null }; }
+        }
+        async function getSubscriberCount(creator) {
+    try {
+        const count = await svcContract.creatorSubscribers(creator, 0);
+        let total = 0;
+        while (true) {
+            try {
+                await svcContract.creatorSubscribers(creator, total);
+                total++;
+            } catch {
+                break;
+            }
+        }
+        return total;
+    } catch (err) {
+        console.error("Error fetching subscribers:", err);
+        return 0;
+    }
+}
+    async function updateCreatorSubscriberCountUI() {
+    const count = await getSubscriberCount(EXAMPLE_CREATOR_ADDRESS);
+
+    // Update Subscriber dashboard
+    document.getElementById("subscriberCountDisplay").textContent = 100 + count;
+
+    // Update Explore Creators section
+    const creatorIndex = DUMMY_CREATORS.findIndex(
+        c => c.address.toLowerCase() === EXAMPLE_CREATOR_ADDRESS.toLowerCase()
+    );
+    if (creatorIndex !== -1) {
+        DUMMY_CREATORS[creatorIndex].subscribers = 100 + count;
+        displayCreators(); // Re-render section
+    }
+}
+
+
+
+        // --- Contract Interaction Functions ---
+
+        async function approveTokens() {
+             if (!signer || !tokenContract) return showGlobalMessage("Not connected.", true);
+             const amountToApprove = parseUnits("100", 18);
+             showGlobalMessage("Sending approval transaction...", false);
+             setLoading(approveBtn, approveBtn.querySelector('.approveBtnText'), approveLoader, true, "Approve Tokens");
+             try {
+                const tx = await tokenContract.approve(SUBSCRIPTION_SERVICE_ADDRESS, amountToApprove);
+                showGlobalMessage(`Approval pending: ${tx.hash.substring(0,10)}...`, false);
+                await tx.wait();
+                showGlobalMessage("Approval successful!", false);
+             } catch (error) {
+                 console.error("Approval failed:", error);
+                 showGlobalMessage(`Approval failed: ${error.reason || error.message || 'Unknown error'}`, true);
+             } finally {
+                 setLoading(approveBtn, approveBtn.querySelector('.approveBtnText'), approveLoader, false, "Approve Tokens");
+                 await refreshStatus();
+             }
+        }
+
+        async function subscribe() {
+             if (!signer || !svcContract) return showGlobalMessage("Not connected.", true);
+             const creatorAddress = EXAMPLE_CREATOR_ADDRESS;
+             const tierId = 0; // Hardcoded Tier 0
+             showGlobalMessage(`Subscribing to Tier ${tierId}...`, false);
+             setLoading(subscribeBtn, subscribeBtn.querySelector('.subscribeBtnText'), subscribeLoader, true, "Subscribe (Tier 0)");
+             try {
+                const tx = await svcContract.subscribe(creatorAddress, tierId, { value: 0 });
+                showGlobalMessage(`Subscription pending: ${tx.hash.substring(0,10)}...`, false);
+                await tx.wait();
+                showGlobalMessage("Subscription successful!", false);
+             } catch (error) {
+                 console.error("Subscription failed:", error);
+                 let reason = error.reason || error.message || 'Unknown error';
+                 if (error.data?.message) reason = error.data.message;
+                 showGlobalMessage(`Subscription failed: ${reason}`, true);
+             } finally {
+                  setLoading(subscribeBtn, subscribeBtn.querySelector('.subscribeBtnText'), subscribeLoader, false, "Subscribe (Tier 0)");
+                 await refreshStatus();
+             }
+             await updateCreatorSubscriberCountUI();
+
+        }
+
+        async function cancel() {
+             if (!signer || !svcContract) return showGlobalMessage("Not connected.", true); // Check connection
+
+             const creatorAddress = EXAMPLE_CREATOR_ADDRESS; // Get creator address
+             showGlobalMessage(`Cancelling subscription...`, false); // Show status
+             setLoading(cancelBtn, cancelBtn.querySelector('.cancelBtnText'), cancelLoader, true, "Cancel Subscription"); // Set loading state
+
+             try {
+                // --- Call the actual contract function ---
+                const tx = await svcContract.cancelSubscription(creatorAddress);
+                showGlobalMessage(`Cancellation pending: ${tx.hash.substring(0,10)}...`, false); // Show pending tx
+
+                await tx.wait(); // Wait for the transaction to be mined
+
+                // Add a small delay for blockchain propagation before refreshing
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                showGlobalMessage("Cancellation successful!", false); // Show success
+
+             } catch (error) {
+                 // Handle potential errors (like revert from contract)
+                 console.error("Cancellation failed:", error);
+                 let reason = error.reason || error.message || 'Unknown error'; // Try to get revert reason
+                 if (error.data?.message) reason = error.data.message;
+                 showGlobalMessage(`Cancellation failed: ${reason}`, true); // Show error
+
+             } finally {
+                 // Always run this after try/catch finishes
+                 setLoading(cancelBtn, cancelBtn.querySelector('.cancelBtnText'), cancelLoader, false, "Cancel Subscription"); // Remove loading state
+                 await refreshStatus(); // Refresh UI based on the new on-chain state
+             }
+             await updateCreatorSubscriberCountUI();
+
+        }
+
+        async function addTier() {
+            if (!signer || !svcContract) return showGlobalMessage("Not connected.", true);
+
+            const priceStr = tierPriceInput.value.trim();
+            const description = tierDescriptionInput.value.trim();
+
+            if (!priceStr || !description) {
+                return showGlobalMessage("Please enter both price and description.", true);
+            }
+
+            let priceWei;
+            try {
+                priceWei = BigInt(priceStr);
+                 if (priceWei <= 0n) throw new Error("Price must be positive");
+            } catch (e) {
+                 console.error("Invalid price input:", e);
+                return showGlobalMessage("Invalid price. Enter the full amount in the smallest token unit.", true);
+            }
+
+            showGlobalMessage(`Adding tier "${description}"...`, false);
+            setLoading(addTierBtn, addTierBtn.querySelector('.addTierBtnText'), addTierLoader, true, "Add Tier");
+             try {
+                const tx = await svcContract.addTier(priceWei, description);
+                showGlobalMessage(`Add Tier pending: ${tx.hash.substring(0,10)}...`, false);
+                await tx.wait();
+                showGlobalMessage("Tier added successfully!", false);
+                tierPriceInput.value = ''; tierDescriptionInput.value = '';
+                // await loadCreatorTiers();
+             } catch (error) {
+                 console.error("Add Tier failed:", error);
+                 let reason = error.reason || error.message || 'Unknown error';
+                 if (error.data?.message) reason = error.data.message;
+                 showGlobalMessage(`Add Tier failed: ${reason}`, true);
+             } finally {
+                 setLoading(addTierBtn, addTierBtn.querySelector('.addTierBtnText'), addTierLoader, false, "Add Tier");
+             }
+        }
+
+        // --- Gemini API Function ---
+        async function suggestTierIdeas() { // Gemini function remains same...
+            if (!account) return showGlobalMessage("Connect wallet first.", true);
+            const creatorType = creatorTypeInput.value.trim();
+            if (!creatorType) { return showGlobalMessage("Please enter your creator type.", true); }
+
+            showGlobalMessage("Asking Gemini for suggestions...", false);
+            geminiSuggestionsDiv.classList.add('hidden');
+            suggestionsContent.innerHTML = '';
+            setLoading(suggestTierBtn, suggestBtnText, suggestLoader, true, "✨ Suggest Tier Ideas");
+
+            const systemPrompt = "You are an expert consultant helping creators design subscription tiers for platforms like Patreon.";
+            const userQuery = `Suggest 3 distinct and creative subscription tier ideas for a "${creatorType}". For each tier, include a catchy Name, a brief Description, a suggested Price Range (e.g., $5-10/month), and one unique Perk idea. Format the response as a simple markdown list.`;
+            const payload = { contents: [{ parts: [{ text: userQuery }] }], systemInstruction: { parts: [{ text: systemPrompt }] } };
+
+            let attempts = 0; const maxAttempts = 5; const baseDelay = 1000;
+            while (attempts < maxAttempts) {
+                try {
+                    const response = await fetch(GEMINI_API_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) {
+                        if (response.status === 429 && attempts < maxAttempts - 1) {
+                            const delay = baseDelay * Math.pow(2, attempts); console.warn(`Gemini rate limited. Retrying in ${delay / 1000}s...`); await new Promise(resolve => setTimeout(resolve, delay)); attempts++; continue;
+                        }
+                        const errorData = await response.json().catch(() => ({})); throw new Error(`Gemini API Error: ${response.status} ${response.statusText}. ${errorData.error?.message || ''}`);
+                    }
+                    const result = await response.json(); const candidate = result.candidates?.[0]; const generatedText = candidate?.content?.parts?.[0]?.text;
+                    if (generatedText) {
+                        suggestionsContent.innerHTML = renderMarkdown(generatedText); geminiSuggestionsDiv.classList.remove('hidden'); showGlobalMessage("Suggestions generated!", false);
+                    } else { throw new Error("No text generated or unexpected response."); }
+                    break; // Success
+                } catch (error) {
+                     console.error("Gemini API call failed:", error);
+                     if (attempts >= maxAttempts - 1) { showGlobalMessage(`Failed to get suggestions: ${error.message}`, true); break; }
+                     const delay = baseDelay * Math.pow(2, attempts); console.warn(`Gemini call failed. Retrying in ${delay / 1000}s...`, error); await new Promise(resolve => setTimeout(resolve, delay)); attempts++;
+                }
+            } // end while
+            setLoading(suggestTierBtn, suggestBtnText, suggestLoader, false, "✨ Suggest Tier Ideas");
+        }
+
+
+        // --- Event Listeners ---
+        connectBtn.addEventListener('click', connectWallet);
+        connectBtnAlt.addEventListener('click', connectWallet); // Also wire up the alt button
+        roleDropdown.addEventListener('change', (event) => { updateUIBasedOnRole(event.target.value); });
+        approveBtn.addEventListener('click', approveTokens);
+        subscribeBtn.addEventListener('click', subscribe);
+        cancelBtn.addEventListener('click', cancel);
+        addTierBtn.addEventListener('click', addTier);
+        suggestTierBtn.addEventListener('click', suggestTierIdeas);
+
+        // --- Initial State ---
+        // Ensure only connection prompt is visible initially
+        dappContent.classList.add('hidden');
+        connectionPrompt.classList.remove('hidden');
+
+    </script>
+
+</body>
+</html>
+
