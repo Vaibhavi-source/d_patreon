@@ -1,59 +1,95 @@
-# 🚀 DecentralSubs – Web3 Patreon
+🎨 DecentralSubs – Web3 Patreon
 
-### 🔗 Decentralized creator subscriptions using ERC20 tokens & Chainlink Automation  
-Built on Ethereum (Sepolia Testnet) — No platform fees.
+A decentralized subscription platform empowering creators using blockchain & ERC-20 tokens
 
----
 
-## 📌 Overview
-DecentralSubs enables fans to directly support creators through blockchain-based subscriptions.  
-No intermediaries, no censorship, and creators keep 100% of their earnings.
 
----
 
-## 👤 About the Project
-- **Created for:** BlockQuest 2025
-- **Built by:** Vaibhavi Jaiswal — RVCE Bangalore
-- **Tech Stack:** Solidity, Ethers.js, TailwindCSS, MetaMask, Chainlink Automation, Sepolia Ethereum
 
----
 
-## ✨ Key Features
 
-✅ Token-based recurring subscriptions (ERC-20)  
-✅ Creator-defined tiers and pricing  
-✅ Automated monthly payments (via Chainlink Keepers)  
-✅ Reentrancy-guarded & secure contract architecture  
-✅ Fully decentralized — no platform middlemen  
-✅ Wallet connect + Live subscription dashboard  
-✅ On-chain subscription tracking
 
----
+🚀 Overview
 
-## 🏗 Smart Contract Deployment
+DecentralSubs allows users to support creators through recurring subscriptions using ERC-20 tokens on Ethereum.
+No intermediaries. No platform fees. 100% goes to creators.
 
-| Contract | Address | Network |
-|---------|---------|---------|
-| 📄 Subscription Service | `0x0355C4629B79c07C6997ec9089A971A06D89C473` | Sepolia |
-| 🪙 Mock ERC-20 Token | `0x2B078CeBE85524725eD1F37c321C1551C8863600` | Sepolia |
-| ⭐ Default Creator | `0xA4eB2Ed4Ae1B970326339Ccb6ADbe87E15935389` | Sepolia |
+💡 Inspired by Patreon — built for Web3
 
----
+✨ Key Features
 
-## 🖥 How It Works (User Flow)
+✅ Decentralized recurring payments
+✅ Creators can set multiple subscription tiers
+✅ Secure token transfers using SafeERC20
+✅ Cancel anytime (no lock-in)
+✅ Automated payments compatible with Chainlink Keepers
+✅ Modern UI + MetaMask integration
+✅ Designed for real-world scaling
 
-### 🔹 Subscriber
-1️⃣ Connect MetaMask (Sepolia)  
-2️⃣ Approve token allowance  
-3️⃣ Subscribe to a tier  
-4️⃣ Cancel anytime (no centralized control!)
+🧩 Tech Stack
+Layer	Technology
+Blockchain	Solidity, ERC-20, Sepolia Testnet
+Backend	Smart Contracts on Ethereum
+Frontend	HTML + TailwindCSS + Ethers.js
+Wallet	MetaMask Web3 Wallet
+Dev Tools	Remix IDE, GitHub, VS Code
+🛠️ Smart Contracts
+File	Purpose
+SubscriptionService.sol	Main subscription logic
+MockERC20.sol	Payment token used for testing
+SafeERC20.sol	Secure token interactions
+ReentrancyGuard.sol	Protects against re-entry attacks
+KeeperCompatible.sol	Chainlink automation compatibility
 
-### 🔹 Creator
-1️⃣ Connect wallet as Creator  
-2️⃣ Add new tiers  
-3️⃣ View subscriber count (auto-updated)
+✅ All contracts verified & deployed on Sepolia 🟣
 
----
+🎯 How It Works
+Role	Actions
+Subscriber	Approve → Subscribe → Auto renew → Cancel anytime
+Creator	Add tiers → Receive payments → View subscribers
+💻 UI Preview
 
-## 🧩 Project Architecture
+✅ Replace these placeholders with your real screenshots
 
+Subscriber View	Creator View
+
+	
+🔗 Demo & Live Interaction
+
+⚡ Connect your MetaMask (Sepolia) to try deploying and interacting with the contract
+
+✅ Coming soon — deploy your frontend via GitHub Pages and add the link here
+
+🧪 Testing Instructions
+
+1️⃣ Connect Wallet (MetaMask – Sepolia)
+2️⃣ Mint test tokens to subscriber
+3️⃣ Approve spending
+4️⃣ Subscribe (Tier-0)
+5️⃣ Cancel subscription any time
+
+🧠 Why Web3?
+
+✖️ Traditional platforms take huge fees (10–30%)
+✔️ Blockchain sends money 🌍 directly to creators
+✔️ Transparent, censorship-resistant systems
+✔️ Users truly own their payments
+
+📌 For Hackathon Submission
+
+🔹 Project Name: DecentralSubs
+🔹 Made By: Vaibhavi Jaiswal – RVCE Bangalore
+🔹 Submitted For: BlockQuest 2025
+
+✅ Future Improvements
+
+🚀 Mobile App Version
+🧠 Creator Analytics Dashboard
+🔐 Subscription NFT Passes
+🤖 Real Chainlink automation activation
+🔥 Real token marketplace support
+
+📜 License
+This project is licensed under the MIT License.
+
+This project is licensed under the MIT License.
